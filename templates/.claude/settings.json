@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm lint:fix)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm env:validate)",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm outdated:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env.*)",
+      "Read(./.npmrc)"
+    ]
+  }
+}

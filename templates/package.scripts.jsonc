@@ -1,0 +1,22 @@
+// Merge into package.json after init.
+{
+  "packageManager": "pnpm@<latest>",
+  "engines": {"node": ">=24"},
+  "scripts": {
+    "env:validate": "node ./scripts/env-check.ts",
+    // TODO(init): Bare → react-native start --reset-cache | Expo → expo start --clear
+    "start": "pnpm env:validate && react-native start --reset-cache",
+    "start:prd": "APP_VARIANT=prd pnpm start",
+    // TODO(init): Bare → react-native run-android --mode=devDebug / run-ios --scheme '<App>-Dev' | Expo → expo run:android / run:ios
+    "android": "pnpm env:validate && react-native run-android --mode=devDebug",
+    "ios": "pnpm env:validate && react-native run-ios --scheme '<App>-Dev'",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "TZ=UTC jest --maxWorkers=50%",
+    "test:coverage": "pnpm test --coverageReporters=text --coverageReporters=lcov",
+    "api:types": "openapi-typescript $API_SPEC_URL -o src/services/http/schema.ts",
+    // TODO(init): Expo → EXPO_ATLAS=1 expo start
+    "bundle:analyze": "react-native-bundle-visualizer"
+  }
+}

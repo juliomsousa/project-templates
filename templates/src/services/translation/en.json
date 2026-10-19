@@ -1,0 +1,14 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "error.generic": "Something went wrong. Please try again."
+  },
+  "profile": {
+    "card.title": "Your profile",
+    "edit.save": "Save changes",
+    "form.nameRequired": "Enter your name",
+    "form.emailInvalid": "Enter a valid email address"
+  }
+}

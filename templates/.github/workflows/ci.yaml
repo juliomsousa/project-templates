@@ -1,0 +1,149 @@
+name: CI
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches: [main, 'release/**', 'hotfix/**']
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege by default; jobs opt in to what they need.
+permissions:
+  contents: read
+
+# Actions are pinned to commit SHAs (version in the trailing comment). Dependabot keeps them current.
+jobs:
+  validate_pr_title:
+    name: Validate PR title
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          npm install --prefix /tmp/commitlint @commitlint/cli @commitlint/config-conventional
+          export NODE_PATH=/tmp/commitlint/node_modules
+          echo "$PR_TITLE" | /tmp/commitlint/node_modules/.bin/commitlint --config commitlint.config.mjs
+
+  validate_commits:
+    name: Validate commit messages
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'edited' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6
+        with:
+          configFile: commitlint.config.mjs
+
+  secrets_scan:
+    name: Secret detection (blocking)
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'edited' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          format: table
+          exit-code: '1'
+
+  vulnerability_report:
+    name: Dependency vulnerabilities (report-only)
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'edited' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Scan dependencies
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: CRITICAL,HIGH,MEDIUM
+          format: json
+          output: trivy-vulns.json
+          exit-code: '0'
+          trivyignores: .trivyignore
+
+      # Job summary + warning annotations
+      - name: Build report
+        run: node scripts/ci/trivy-report.mjs trivy-vulns.json trivy-report.md
+
+      # Sticky PR comment (fails softly on fork PRs, whose token is read-only)
+      - name: Comment on the PR
+        if: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/upsert-comment.sh "${{ github.event.pull_request.number }}" trivy-report.md '<!-- trivy-vulnerability-report -->'
+
+  quality:
+    name: Typecheck, lint & test
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'edited' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Skip the heavy steps when only docs or other non-code files changed.
+      # Step-level conditions keep the job (a required check) green when skipped.
+      - name: Check changed paths
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - '__fixtures__/**'
+              - '__mocks__/**'
+              - 'scripts/**'
+              - '*.{js,mjs,ts,json,yaml}'
+              - '.env.sample'
+              - '.nvmrc'
+
+      - if: steps.filter.outputs.code == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - if: steps.filter.outputs.code == 'true'
+        run: corepack enable
+      - if: steps.filter.outputs.code == 'true'
+        run: pnpm i --frozen-lockfile
+      - if: steps.filter.outputs.code == 'true'
+        name: Create env file
+        run: cp .env.sample .env.dev
+      - if: steps.filter.outputs.code == 'true'
+        run: pnpm env:validate
+      - if: steps.filter.outputs.code == 'true'
+        run: pnpm typecheck
+      - if: steps.filter.outputs.code == 'true'
+        run: pnpm lint
+      - if: steps.filter.outputs.code == 'true'
+        run: pnpm test
+
+      - if: steps.filter.outputs.code != 'true'
+        run: echo "No code changes, quality checks skipped."
+
+  # TODO(planning): once the E2E tool is chosen, add an e2e-quality workflow that lints and
+  # typechecks e2e/ only when e2e/** or the shared locator/route constants change.

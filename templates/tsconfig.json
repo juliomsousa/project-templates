@@ -1,0 +1,16 @@
+{
+  // TODO(init): Expo → "extends": "expo/tsconfig.base"
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "paths": {
+      "@app/*": ["./src/*"],
+      "@fixtures/*": ["./__fixtures__/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "android", "ios", "e2e", "coverage"]
+}

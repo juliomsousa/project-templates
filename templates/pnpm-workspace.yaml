@@ -1,0 +1,19 @@
+# Supply-chain hardening. Keep these settings in every project.
+
+# Refuse package versions published less than 24h ago (window for malicious releases to be pulled)
+minimumReleaseAge: 1440
+# minimumReleaseAgeExclude:
+#   - '@your-org/*'
+
+autoInstallPeers: false
+
+# Allowlist of packages permitted to run install scripts. Add entries deliberately.
+onlyBuiltDependencies: []
+
+# Force patched versions of vulnerable transitive dependencies, e.g.
+# overrides:
+#   'some-lib@<1.2.3': '^1.2.3'
+overrides: {}
+
+# Every library patch lives in patches/ and is listed here (`pnpm patch <pkg>`)
+patchedDependencies: {}

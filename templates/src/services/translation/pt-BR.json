@@ -1,0 +1,14 @@
+{
+  "common": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "retry": "Tentar novamente",
+    "error.generic": "Algo deu errado. Tente novamente."
+  },
+  "profile": {
+    "card.title": "Seu perfil",
+    "edit.save": "Salvar alterações",
+    "form.nameRequired": "Informe seu nome",
+    "form.emailInvalid": "Informe um e-mail válido"
+  }
+}

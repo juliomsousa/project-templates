@@ -1,0 +1,59 @@
+name: Weekly security scan
+# Catches new CVEs in dependencies that nobody touched. Keeps a single tracking issue
+# open while vulnerabilities exist and closes it when the scan is clean.
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Scan main for dependency vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_LABEL: dependency-vulnerabilities
+      ISSUE_TITLE: Dependency vulnerabilities
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: CRITICAL,HIGH,MEDIUM
+          format: json
+          output: trivy-vulns.json
+          exit-code: '0'
+          trivyignores: .trivyignore
+
+      - id: report
+        run: node scripts/ci/trivy-report.mjs trivy-vulns.json trivy-report.md
+
+      - name: Open, update or close the tracking issue
+        run: |
+          gh label create "$ISSUE_LABEL" --color B60205 --description "Opened by the weekly security scan" --force
+          issue=$(gh issue list --label "$ISSUE_LABEL" --state open --json number --jq '.[0].number // empty')
+
+          if [ "${{ steps.report.outputs.total }}" -gt 0 ]; then
+            if [ -n "$issue" ]; then
+              gh issue edit "$issue" --body-file trivy-report.md
+            else
+              gh issue create --title "$ISSUE_TITLE" --label "$ISSUE_LABEL" --body-file trivy-report.md
+            fi
+          elif [ -n "$issue" ]; then
+            gh issue close "$issue" --comment "✅ The weekly scan found no vulnerabilities."
+          fi
