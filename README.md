@@ -1,76 +1,97 @@
-# React Native App Template — Conventions & Starter Files
+# Squad AI
 
-Conventions, constraints and starter files for new React Native apps. This folder has two parts:
+An autonomous software squad run by one human. You define the product; AI agents plan, implement, verify and deliver, inside the guardrails this repository defines.
 
-- **`docs/`**: the rules, the reasons for them, and code examples. Copy them into each new project as `docs/conventions/`.
-- **`templates/`**: files to copy into a freshly initialised project. Paths mirror the target project root.
+This repository holds **only the structure**: the stack-agnostic squad (`plugin/`) and one template per stack (`templates/`). Every project lives in its own repository, created from here. Nothing project-specific is ever committed back.
 
-The rules come from production React Native and React projects, then made project-agnostic.
+## How the squad works
+
+![Squad AI delivery flow](docs/squad-flow.png)
+
+*Source: [`docs/squad-flow.svg`](docs/squad-flow.svg).*
+
+Three loops, deliberately separate: **delivery** (ticket → PR → merge), **quality** (verifier → check run) and **release** (tag → store). A merge into `main` never means a release.
+
+### Roles
+
+| Role | Who | Responsibility |
+|---|---|---|
+| Product owner / tech lead | You | Approve PRD, architecture, ticket order, `hitl` tickets, releases. Answer blocked tickets. |
+| Planning agents | BMAD v7 skills | Interview you, write brief, PRD, UX, architecture; slice epics into tickets with `Verify:` steps. |
+| Orchestrator | `squad-orchestrator` (Opus) | Pick tickets, choose models and effort, dispatch, retry, block, auto-merge. Never writes code. |
+| Dev | `squad-dev` (Sonnet, worktree) | One ticket, one branch, one PR. Never asks; returns `blocked` instead. |
+| Verifier | `squad-verifier` (Sonnet, fresh context) | Code review + QA in one pass. Produces evidence and a verdict. Never fixes code. |
+| Guards | hooks + GitHub rulesets | Enforce what instructions cannot: no push to main, quality before commit, no majors, no secrets, no native/CI edits. |
+| Release | release-please + protected workflow | Tag on your click; store credentials never reach agents. |
+
+### Principles
+
+- **Instructions are requests; hooks are guarantees.** Every rule that matters is a hook or a required check.
+- **Verifier ≠ developer.** The agent that judges never saw the implementer's context.
+- **Approvals are never required on GitHub.** The verifier's verdict is a status check; auto-merge depends on checks only.
+- **Sequential by default.** Parallel agents multiply token spend; the orchestrator decides when it is worth it.
+- **Everything is English**, except the conversation with you.
+- **Comments are rare.** Code is self-explanatory; human-written comments are never touched.
+- **Library docs come from Context7**, then official docs, then the web. Never from memory.
+
+## Repository layout
+
+| Folder | Purpose |
+|---|---|
+| [`plugin/`](plugin/README.md) | The squad: agents, skills, hooks, settings, workflows, rulesets, universal `AGENTS.md`. Copied into every project. |
+| [`templates/mobile/`](templates/mobile/README.md) | React Native conventions and starter files. |
+| `templates/web/` | Placeholder. |
+| `templates/backend/` | Placeholder. |
+| `.claude/skills/squad-init/` | The only skill that runs **here**: creates a new project from this structure. |
 
 ## How to use
 
-1. **Plan:** go through [Decisions to make during planning](#decisions-to-make-during-planning) with the project owner.
-2. **Init** the project with the chosen workflow (Bare React Native CLI or Expo).
-3. **Copy** `templates/` over the new project and `docs/` to `docs/conventions/`. Then resolve each `TODO(init)` marker, which sits where Bare and Expo differ:
-   - **Expo:** rename `metro.config.expo.js` to `metro.config.js`.
-   - **Bare:** delete `metro.config.expo.js`.
-4. **Install** the dependencies listed in [docs/01-stack.md](docs/01-stack.md), including the Rozenite devtools plugin for each library that has one. Libraries that tend to ship breaking changes get exact versions.
-5. **Run** `pnpm env:validate && pnpm typecheck && pnpm lint && pnpm test`. All four must pass before the first commit.
-6. **Work spec-first with Claude** ([docs/08](docs/08-ai-workflow.md)): `CLAUDE.md`, `.claude/skills/` and `docs/specs/_TEMPLATE.md` are already in `templates/`.
+### Create a project
 
-## Docs
+```
+cd <this repo>
+claude
+/squad-init            # or: /squad-init --brownfield /path/to/existing/repo
+```
 
-| # | Doc | Covers |
-|---|---|---|
-| 01 | [Stack](docs/01-stack.md) | Libraries, versions, usehooks-ts, Rozenite devtools |
-| 02 | [Folder structure](docs/02-folder-structure.md) | Directory layout and placement rules |
-| 03 | [Coding conventions](docs/03-coding-conventions.md) | Formatting, lint, naming, imports, TypeScript, components, styling, SVG, error boundaries, feature flags, forms, navigation building blocks |
-| 04 | [Data layer](docs/04-data-layer.md) | Typed HTTP client, query hooks, errors, token refresh (with code) |
-| 05 | [State, env & i18n](docs/05-state-env-i18n.md) | Zustand + store registry, MMKV, Keychain and biometrics, env validation, variants, translations |
-| 06 | [Testing](docs/06-testing.md) | Jest, snapshot-first, test utils, dates, coverage, E2E conventions |
-| 07 | [Workflow & constraints](docs/07-workflow-and-constraints.md) | Commits, CI (report-only vulnerabilities), supply chain, hard rules |
-| 08 | [AI workflow](docs/08-ai-workflow.md) | Claude setup, spec-first flow, skills |
-| 09 | [Observability](docs/09-observability.md) | Logger and sinks, monitoring adapter, analytics adapter + consent |
+`squad-init` interviews you (where to create the project, stack, existing documents, which tickets need human review, QA platform, notifications, GitHub owner), then:
 
-## Decisions to make during planning
+1. Lists every tool and credential the project will need and **stops until `scripts/squad-doctor.sh` reports them present**. Credentials are never typed into the chat: you paste them where they belong (GitHub secrets, a protected environment, your shell profile) and the doctor only checks that they exist.
+2. Scaffolds the project with the stack's official command (`npx create-expo-app`, `npx @react-native-community/cli init`, …) and commits the untouched boilerplate: `chore: initial commit (<tool> <version>)`.
+3. Copies the squad structure and the template, installs the pinned BMAD skills, fills `squad.config.json`, and commits: `chore: apply squad structure (squad-ai <version>)`.
+4. Creates the GitHub repository, ruleset, labels and board.
 
-These are deliberately **not** fixed by the template. Ask the project owner before scaffolding:
+### Plan
 
-| Topic | Options / notes |
-|---|---|
-| Init workflow | **Bare RN CLI** or **Expo**. This choice decides navigation, env injection, build variants, Metro config and the Jest preset |
-| Navigation | React Navigation (Bare) or Expo Router (Expo). **Ask for a code reference from another project before implementing.** The reusable building blocks are in [03](docs/03-coding-conventions.md#navigation) |
-| Auth provider | Implement `setTokenRefresher` and login with it ([04](docs/04-data-layer.md#authentication--token-refresh)) |
-| Monitoring / crash reporting | e.g. Datadog, Sentry, Firebase Crashlytics. Write a log-sink adapter ([09](docs/09-observability.md)) |
-| Product analytics | e.g. Piwik Pro, Amplitude, Firebase Analytics, or none. Write an analytics adapter ([09](docs/09-observability.md)) |
-| Feature-flag source | Remote config tool, login payload or a backend endpoint. It feeds `setFlags` ([03](docs/03-coding-conventions.md#feature-flags)) |
-| E2E tool | e.g. Maestro or Detox. The conventions are already defined ([06](docs/06-testing.md#e2e)) |
-| Accessibility | If requested, add `@react-native-ama/*` and the a11y conventions. Can be added after init |
-| Security hardening | SSL pinning, jailbreak/root detection. Only if the project requires them |
-| Server-state persistence | Whether the TanStack Query cache is persisted to disk |
+```
+/discovery-greenfield   # new product: brief → PRD → architecture → tickets
+/discovery-brownfield   # existing code: recon → context → "align to template" epic
+```
 
-## Fixed conventions (summary)
+You review each document in [Plannotator](https://github.com/backnotprop/plannotator) and approve or annotate. Mark critical tickets `hitl = true`.
 
-- **Tooling:** pnpm, TypeScript strict, `@app/*` path alias, named exports (Expo Router files are the only exception), no barrel files.
-- **Structure:** feature-first `src/features/<feature>/<Screen>/`, with each screen in its own folder.
-- **Data:**
-  - One typed HTTP client, with a fetcher and a TanStack Query hook per endpoint.
-  - Token refresh happens only once even when several requests need it at the same time.
-- **State:**
-  - Zustand stores register themselves and reset on logout.
-  - Non-sensitive data is persisted to MMKV.
-  - Secrets go to the Keychain/Keystore.
-- **Validation:** Zod validates env, forms and external data, with Zod's own messages translated.
-- **Styling:**
-  - Unistyles 3, pinned to an exact version, with every value coming from the theme.
-  - SVGs are imported as components and coloured from the theme.
-- **i18n:** i18next with `en`, `es` and `pt-BR`.
-- **Testing:** Jest + Testing Library, snapshot-first, Given/When/Then names, a 90% coverage gate.
-- **Observability:** vendor-neutral facades for logging, monitoring and analytics, plus error boundaries.
-- **Devtools:** Rozenite, with a plugin for each library that has one.
-- **CI:**
-  - Conventional Commits.
-  - Secret detection blocks the merge.
-  - Vulnerabilities are report-only but visible: a PR comment, the job summary, annotations and a weekly issue.
-- **AI:** Claude Code with `CLAUDE.md`, skills, and a spec-first workflow.
-- **Bundler:** Metro, the React Native default. Heavy dependencies are imported by subpath and the bundle size is measured.
+### Deliver
+
+```
+/squad-run                       # whole backlog, sequential
+/squad-run --ticket APP-12       # one ticket
+/squad-run --parallel 2          # when tickets are independent and you accept the token cost
+```
+
+The squad does not depend on any particular orchestration or remote UI: run it from a terminal, from Claude Code Remote Control, from Paseo, Orca or whatever you prefer to start sessions and approve permissions from your phone. Blocked tickets and finished runs notify you through the channel in `squad.config.json`.
+
+### Release
+
+```
+/release-prepare v1.2.0          # audit merged tickets, check hitl approvals, review changelog
+```
+
+Then merge the Release PR on GitHub. The tag triggers the protected release workflow.
+
+## Commit convention
+
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) everywhere, enforced by commitlint in CI: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`, `ci`, `build`; `!` for breaking changes; ticket id in the scope (`feat(APP-12): …`). See the [semantic commit cheat sheet](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716#file-semantic-commit-messages-md).
+
+## Status
+
+Phase 0 (structure) is written and the hooks are tested with synthetic payloads. See `plugin/README.md` › *Before first use* for what must be pinned and configured before the first real run.

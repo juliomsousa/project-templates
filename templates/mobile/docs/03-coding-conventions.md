@@ -4,7 +4,7 @@ Legend: **[lint]** means a tool enforces the rule. **[review]** means a conventi
 
 ## Formatting [lint]
 
-Prettier runs through ESLint. See `templates/.prettierrc.js`.
+Prettier runs through ESLint. See `files/.prettierrc.js`.
 
 ```js
 {arrowParens: 'avoid', bracketSameLine: true, bracketSpacing: false,
@@ -15,12 +15,12 @@ This gives no semicolons, single quotes, `{foo}` without spaces, `x => x`, and n
 
 ## ESLint highlights [lint]
 
-Base config: `@react-native/eslint-config/flat` (Bare) or `eslint-config-expo/flat` (Expo), plus `typescript-eslint` recommended, `eslint-plugin-sonarjs` recommended, `eslint-plugin-import` and Prettier. See `templates/eslint.config.mjs`.
+Base config: `@react-native/eslint-config/flat` (Bare) or `eslint-config-expo/flat` (Expo), plus `typescript-eslint` recommended, `eslint-plugin-sonarjs` recommended, `eslint-plugin-import` and Prettier. See `files/eslint.config.mjs`.
 
 | Rule | Why |
 |---|---|
 | `no-console: error` | Log through `utils/logger` only |
-| `@typescript-eslint/no-explicit-any: off` | Off, as in the source projects. `unknown` + narrowing is still the preferred style [review] |
+| `@typescript-eslint/no-explicit-any: off` | Off: third-party edges make a hard ban impractical. `unknown` + narrowing is the expected style [review] |
 | `@typescript-eslint/ban-ts-comment` | Bans `@ts-ignore`. `@ts-expect-error: <reason>` is allowed |
 | `@typescript-eslint/consistent-type-imports` (inline) | `import {type Foo, bar} from '…'` |
 | `import/order` (alphabetised, `react` and `react-native` first, `@app/**` last) | Stable, diff-friendly imports |
@@ -68,6 +68,27 @@ Metro **does not tree-shake** by default, so importing a package's root entry bu
    - Bare: `npx react-native-bundle-visualizer` (source-map-explorer treemap of the Metro bundle).
    - Expo: Expo Atlas (`EXPO_ATLAS=1 npx expo start`, then open Atlas from the dev tools), or `npx expo export --dump-sourcemap` + `npx source-map-explorer`.
 4. Prefer native platform APIs, or a small focused library, over large general-purpose ones.
+
+## Comments [review]
+
+Code is self-explanatory. The name of a function, variable, type or test carries the meaning; a comment that repeats it is noise and is removed in review.
+
+- Never explain *what* a function does when its name already says it.
+- A comment is acceptable only for a genuinely complex flow, a non-obvious constraint, a workaround with a link to the issue, or a property worth calling out (for example an `/* istanbul ignore next */` with its reason).
+- Prefer extracting a well-named function over writing a comment.
+- Comments added by a human are kept as written. Agents never delete or rewrite them.
+
+```ts
+// ❌
+// Fetches the current user
+export const fetchMe = (signal?: AbortSignal) => callApi('/users/me', {method: 'get', signal})
+
+// ✅
+export const fetchMe = (signal?: AbortSignal) => callApi('/users/me', {method: 'get', signal})
+
+// ✅ allowed: documents a constraint the code cannot express
+// The refresh request must not go through callApi: it is unauthenticated and would recurse.
+```
 
 ## TypeScript [lint + review]
 
@@ -288,7 +309,7 @@ These pieces apply if the project uses React Navigation. Expo Router covers most
 
 > **TBD.** Applies only if accessibility is requested for the project, and can be added after init.
 
-When it is enabled, the source project's baseline was:
+When it is enabled, the baseline is:
 
 - `@react-native-ama/*` with `AMAProvider` and accessible forms.
 - `accessibilityRole`, `accessibilityLabel` and `accessibilityHint` on interactive elements, and `accessibilityRole="header"` on headings.

@@ -22,6 +22,7 @@ React Native app (TypeScript, pnpm). The full conventions live in `docs/conventi
 - Make network calls only through `callApi` plus a per-endpoint hook in `src/services/<domain>Service/`.
 - No hard-coded user-facing strings (`t()`), testIDs (`constants/locators.ts`), colours or spacing (theme).
 - No `console.*` (use `logger`) and no `@ts-ignore` (use `@ts-expect-error: <reason>`).
+- No comments that restate the code. Names must explain themselves; comment only a complex flow or a constraint the code cannot express. Never delete or rewrite comments a human wrote.
 - Colocate tests with the code. Prefer snapshot tests, name tests Given/When/Then, and keep coverage at or above 90%.
 - When you add an env var, add it to `.env.sample`, `src/rawEnv.ts` and `src/env.ts`.
 - Secrets go to the Keychain via `services/auth/secureStorage`, never to MMKV, env vars or navigation params.

@@ -27,7 +27,7 @@ Rules for versions:
 | Error boundary | `react-error-boundary` | Wrapped by `components/ErrorBoundary` (logs + translated fallback) |
 | SVG | `react-native-svg` + `react-native-svg-transformer` | Imported as components, see [03 › SVG icons](03-coding-conventions.md#svg-icons) |
 | Secure storage | `react-native-keychain` (Bare) / `expo-secure-store` (Expo) | Tokens and secrets only |
-| Devtools | Rozenite (`@rozenite/metro` + plugins) | See [Devtools](#devtools-rozenite). Replaces Reactotron |
+| Devtools | Rozenite (`@rozenite/metro` + plugins) | See [Devtools](#devtools-rozenite) |
 | Unit tests | `jest` + `@testing-library/react-native` | Preset depends on workflow, see [06](06-testing.md) |
 | Lint / format | ESLint (flat config) + Prettier + `typescript-eslint` + `eslint-plugin-sonarjs` + `eslint-plugin-import` | |
 

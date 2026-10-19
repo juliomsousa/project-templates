@@ -1,0 +1,52 @@
+{
+  "structure_version": "0.1.0",
+  "project": {
+    "name": "my-app",
+    "type": "mobile",
+    "mode": "greenfield",
+    "default_branch": "main"
+  },
+  "quality": {
+    "commands": [
+      "pnpm env:validate",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test"
+    ]
+  },
+  "build": {
+    "test_build": "pnpm build:test",
+    "artifact_glob": "build/*.apk"
+  },
+  "qa": {
+    "tool": "agent-device",
+    "platform": "android",
+    "evidence_dir": ".agent-device/test-artifacts",
+    "flows_dir": "e2e/maestro"
+  },
+  "gates": {
+    "max_dev_retries": 2,
+    "hitl_default": false,
+    "block_on": ["dependency-major", "native-change", "ci-change", "vulnerability-critical-high", "verify-failed"]
+  },
+  "secrets": {
+    "paths": [".env.*", ".npmrc", "**/google-services.json", "**/GoogleService-Info.plist", "**/*.p8", "**/*.keystore", "**/*.jks", "**/*.mobileprovision"]
+  },
+  "dependencies": {
+    "manager": "pnpm",
+    "allow_major": false
+  },
+  "notify": {
+    "channel": "ntfy",
+    "topic": "squad-my-app",
+    "url": "https://ntfy.sh"
+  },
+  "tracker": {
+    "kind": "github",
+    "project_board": ""
+  },
+  "bmad": {
+    "pinned_ref": "",
+    "tickets_file": "_bmad-output/tickets/tickets.toml"
+  }
+}

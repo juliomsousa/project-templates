@@ -1,0 +1,50 @@
+name: Verifier check
+# Turns the squad verifier's verdict (posted as a PR comment containing a JSON block
+# with marker <!-- squad-verifier -->) into a required check run. Approvals are never used;
+# the verdict is a status check so auto-merge can rely on it.
+on:
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      pr: { description: PR number, required: true }
+
+permissions:
+  checks: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && contains(github.event.comment.body, '<!-- squad-verifier -->')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read verdict
+        id: verdict
+        env:
+          GH_TOKEN: ${{ secrets.SQUAD_GH_TOKEN || github.token }}
+          PR: ${{ github.event.inputs.pr || github.event.issue.number }}
+        run: |
+          body="$(gh api repos/${{ github.repository }}/issues/$PR/comments --paginate --jq '[.[] | select(.body | contains("<!-- squad-verifier -->"))] | last | .body')"
+          json="$(printf '%s' "$body" | sed -n '/```json/,/```/p' | sed '1d;$d')"
+          verdict="$(printf '%s' "$json" | jq -r '.verdict')"
+          summary="$(printf '%s' "$json" | jq -r '.summary')"
+          sha="$(gh api repos/${{ github.repository }}/pulls/$PR --jq .head.sha)"
+          echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          { echo "summary<<EOS"; echo "$summary"; echo "EOS"; } >> "$GITHUB_OUTPUT"
+      - name: Publish check run
+        env:
+          GH_TOKEN: ${{ secrets.SQUAD_GH_TOKEN || github.token }}
+        run: |
+          case "${{ steps.verdict.outputs.verdict }}" in
+            pass) conclusion=success ;;
+            fail) conclusion=failure ;;
+            *)    conclusion=action_required ;;
+          esac
+          gh api -X POST repos/${{ github.repository }}/check-runs \
+            -f name=verifier -f head_sha=${{ steps.verdict.outputs.sha }} \
+            -f status=completed -f conclusion=$conclusion \
+            -f 'output[title]=Squad verifier: ${{ steps.verdict.outputs.verdict }}' \
+            -f 'output[summary]=${{ steps.verdict.outputs.summary }}'

@@ -19,7 +19,7 @@ export const consoleSink: LogSink = {
 
 let sinks: LogSink[] = __DEV__ ? [consoleSink] : []
 
-/** Register the monitoring adapter (TODO(planning): Datadog, Sentry, Crashlytics …) */
+/** Register the monitoring adapter chosen during planning (TODO(planning)) */
 export const addLogSink = (sink: LogSink) => {
   sinks = [...sinks, sink]
 }

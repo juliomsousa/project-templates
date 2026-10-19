@@ -73,7 +73,7 @@ export default defineConfig([
           message: 'This component requires a testID from @app/constants/locators.'
         }
       ],
-      // Off, as in the source projects. Prefer `unknown` + narrowing (docs/03).
+      // Off: third-party edges make a hard ban impractical. Prefer `unknown` + narrowing (docs/03).
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',

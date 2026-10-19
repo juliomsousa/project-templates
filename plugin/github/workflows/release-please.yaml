@@ -1,0 +1,21 @@
+name: Release Please
+# Keeps a Release PR open from Conventional Commits. Merging that PR (the human's only click)
+# creates the tag and the GitHub Release, which triggers release-mobile.yaml.
+# Uses SQUAD_GH_TOKEN (App token or PAT): tags created with GITHUB_TOKEN do not trigger workflows.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.SQUAD_GH_TOKEN }}
+          release-type: node

@@ -13,7 +13,7 @@ Rules:
 4. **Query keys come from one factory** (`queryKeys.ts`), never from inline arrays.
 5. **Errors are typed classes** that carry metadata only, never payloads.
 
-Files in `templates/src/services/`:
+Files in `files/src/services/`:
 
 | File | Role |
 |---|---|

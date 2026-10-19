@@ -62,7 +62,7 @@ Run with `pnpm test` (uses `TZ=UTC`, so date tests are deterministic) or `pnpm t
   - `/* istanbul ignore file */` only for pure wiring with no logic (storage instances, navigation type files).
   - `__fixtures__/`, `__mocks__/` and `*.d.ts` are excluded in `jest.config.js`.
 
-## Examples in `templates/`
+## Examples in `files/`
 
 - `components/ProfileCard/ProfileCard.test.tsx`: component, roles, press handler.
 - `components/ErrorBoundary/ErrorBoundary.test.tsx`: error logging, fallback, retry.

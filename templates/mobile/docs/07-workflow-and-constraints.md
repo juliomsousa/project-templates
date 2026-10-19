@@ -82,4 +82,5 @@ The settings live in `pnpm-workspace.yaml` and `.npmrc`:
 | Server data copied into Zustand | TanStack Query cache |
 | Vendor SDK calls in features (analytics, monitoring) | The `trackEvent` / `logger` facades + an adapter |
 | Updating snapshots without review | Review the diff, then `-u` |
+| Comments that restate the code | Self-explanatory names; comments only for complex flows or constraints; never touch human-written comments |
 | Custom ESLint plugins for simple checks | `no-restricted-syntax` / `no-restricted-imports` |

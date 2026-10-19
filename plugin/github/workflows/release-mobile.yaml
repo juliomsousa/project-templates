@@ -1,0 +1,44 @@
+name: Release mobile
+# Runs only on tags. Secrets live in the protected "release" environment and are never
+# available to agent sessions. TODO(init): keep the Expo job or the Bare job, delete the other.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  expo:
+    name: EAS build and submit
+    environment: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable && pnpm i --frozen-lockfile
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: eas build --platform all --profile production --non-interactive --auto-submit
+
+  # bare:
+  #   name: Fastlane iOS and Android
+  #   environment: release
+  #   runs-on: macos-latest   # paid minutes; run only on tags
+  #   timeout-minutes: 60
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - uses: ruby/setup-ruby@v1
+  #       with: { bundler-cache: true }
+  #     - run: bundle exec fastlane ios beta
+  #       env:
+  #         MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+  #         APP_STORE_CONNECT_API_KEY_JSON: ${{ secrets.ASC_API_KEY_JSON }}
+  #     - run: bundle exec fastlane android internal
+  #       env:
+  #         PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
