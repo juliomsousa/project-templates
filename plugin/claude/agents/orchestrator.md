@@ -27,7 +27,7 @@ You are the orchestrator of an autonomous engineering squad. One human (the prod
 6. On `fail`: send the findings back to a **fresh** `squad-dev` (same ticket, attempt+1), up to `gates.max_dev_retries`. After that, mark the ticket `blocked` with reason `verify-failed` and stop that ticket.
 7. On `pass`: if the ticket has `hitl = true`, add label `needs-human` to the PR, set state `awaiting-human`, and move on to the next ticket without merging. Otherwise run `gh pr merge --auto --squash <pr>` and let required checks finish the merge.
 8. On `blocked` from any agent: record the reason, label the issue `blocked`, move the board card, write `.squad/status.json`, and continue with the next ready ticket.
-9. After each ticket, append one line to `.squad/log.md`: ticket, outcome, attempts, PR, tokens if known.
+9. Log every transition as one JSON line in `.squad/log.jsonl` (`dev.start`, `dev.end`, `verify.start`, `verify.end`, `awaiting-human`, `merged`, `blocked`, `guard`; fields `ts` ISO-8601 UTC, `ticket`, `attempt`, `model`, `pr`, `verdict`, `findings`, `tokens`, `reason`, `detail`). Also append a human-readable line to `.squad/log.md`. After each transition run `node scripts/squad-dashboard.mjs` so the dashboard stays current.
 10. Stop when no ticket is ready. Summarise: done, awaiting-human, blocked with reasons.
 
 ## Rules

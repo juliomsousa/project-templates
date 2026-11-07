@@ -5,7 +5,7 @@ The stack-agnostic part of the squad. `squad-init` copies this folder into every
 | Source | Destination in the project | Purpose |
 |---|---|---|
 | `claude/agents/` | `.claude/agents/` | `squad-orchestrator` (Opus), `squad-dev` (Sonnet, worktree), `squad-verifier` (Sonnet, review + QA in one pass) |
-| `claude/skills/` | `.claude/skills/` | `squad-run`, `implement-ticket`, `verify-ticket`, `discovery-greenfield`, `discovery-brownfield`, `release-prepare`, `squad-sync` |
+| `claude/skills/` | `.claude/skills/` | `squad-run`, `implement-ticket`, `verify-ticket`, `discovery-greenfield`, `discovery-brownfield`, `release-prepare`, `squad-dashboard`, `squad-sync` |
 | `claude/hooks/` | `.claude/hooks/` | Enforcement: no push to main, quality before commit, dependency guard, secret guard, protected paths, notifications |
 | `claude/settings.json` | `.claude/settings.json` | Permissions and hook registration |
 | `mcp.json` | `.mcp.json` | Context7 for library docs (mobile adds agent-device and maestro) |
@@ -14,6 +14,7 @@ The stack-agnostic part of the squad. `squad-init` copies this folder into every
 | `github/rulesets/main.json` | `.github/rulesets/` | Required status checks, 0 approvals, squash only |
 | `squad.config.example.json` | `squad.config.json` | Per-project configuration read by hooks, skills and agents |
 | `scripts/squad-doctor.sh` | `scripts/` | Presence check of tools and credentials; never prints values |
+| `scripts/squad-dashboard.mjs` | `scripts/` | Read-only dashboard generator → `.squad/dashboard/index.html` (Plan + Delivery views, agent time per ticket, Refresh) |
 | `VERSION` | `squad.config.json#structure_version` | Structure version and the pinned BMAD ref |
 
 ## How the loop works

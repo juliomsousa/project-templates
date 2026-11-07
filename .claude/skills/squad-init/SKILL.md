@@ -74,7 +74,8 @@ Copy from the monorepo (`$MONOREPO` = two levels up from `.claude/skills/squad-i
 - `plugin/squad.config.example.json` → `squad.config.json`, filled with the interview answers and `structure_version` from `plugin/VERSION`
 - `templates/<type>/files/` → project root (over the boilerplate; the template's `package.scripts.jsonc` merges into `package.json`), `templates/<type>/docs/` → `docs/conventions/`. Resolve the `TODO(init)` markers the interview answered. Leave the rest for `bmad-architecture`.
 - Existing material → `docs/input/`
-- `plugin/scripts/squad-doctor.sh` → `scripts/squad-doctor.sh`
+- `plugin/scripts/squad-doctor.sh` → `scripts/squad-doctor.sh`; `plugin/scripts/squad-dashboard.mjs` → `scripts/squad-dashboard.mjs`
+- Append `.squad/dashboard/` and `.claude/worktrees/` to `.gitignore` (the rest of `.squad/` is committed: status and log are the project's history)
 - `chmod +x .claude/hooks/*.sh scripts/squad-doctor.sh`
 - Install the template's dependencies with the stack's package manager (exact versions where the template says so). Run the template's required local check (mobile: `pnpm env:validate && pnpm typecheck && pnpm lint && pnpm test`) and fix the scaffold until it passes.
 

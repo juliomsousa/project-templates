@@ -80,6 +80,14 @@ You review each document in [Plannotator](https://github.com/backnotprop/plannot
 
 The squad does not depend on any particular orchestration or remote UI: run it from a terminal, from Claude Code Remote Control, from Paseo, Orca or whatever you prefer to start sessions and approve permissions from your phone. Blocked tickets and finished runs notify you through the channel in `squad.config.json`.
 
+### See where the project stands
+
+```
+/squad-dashboard                 # or: node scripts/squad-dashboard.mjs && open .squad/dashboard/index.html
+```
+
+A static page with two views: **Plan** (documents, epics, stories, Verify steps, human-review flags, decisions pending) and **Delivery** (current ticket, pipeline, run log with agent time per ticket, your queue). Read-only by design: every control is a link to the file, the PR or the issue where the decision is made. The orchestrator regenerates it after every transition; the Refresh button reloads it.
+
 ### Release
 
 ```
